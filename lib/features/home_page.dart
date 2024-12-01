@@ -26,36 +26,40 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     getNews();
   }
-void getNews() async {
-  setState(() {
-    _isLoading = true;
-  });
 
-  final hiveService = await HiveService.getInstance();
-  final cachedNews = hiveService.getValue("news");
-  print("Cached news type: ${cachedNews.runtimeType}");
+  void getNews() async {
+    setState(() {
+      _isLoading = true;
+    });
 
- if (cachedNews != null) {
-  try {
-    news = (cachedNews as List<dynamic>)
-        .map((e) => NewsClass.fromJson(e))
-        .toList();
-    print("Loaded cached news successfully: $news");
-  } catch (err) {
-    print("Error while loading cached news: $err");
-    news = [];
+    final hiveService = await HiveService.getInstance();
+    final cachedNews = hiveService.getValue("news");
+
+    print("the value of the cached news is ${cachedNews.runtimeType}");
+    
+    if (cachedNews != null) {
+      news = List<NewsClass>.from(cachedNews ?? []);
+      print("the news is $news");
+      Flushbar(
+        title: "data is cached",
+        titleColor: Colors.white,
+        icon: const Icon(Icons.check),
+        titleSize: 20,
+        backgroundColor: Colors.green,
+        dismissDirection: FlushbarDismissDirection.HORIZONTAL,
+        message: "yeah i have been able to cache the data i wanted",
+        flushbarPosition: FlushbarPosition.TOP,
+
+      ).show(context);
+    } else {
+      NewsApi newsApi = NewsApi();
+      await newsApi.getNews();
+      news = newsApi.articleNews;
+    }
+    setState(() {
+        _isLoading = false;
+      });
   }
-} else {
-    // Fetch new data if cache is empty
-    NewsApi newsApi = NewsApi();
-    await newsApi.getNews();
-    news = newsApi.articleNews;
-  }
-
-  setState(() {
-    _isLoading = false;
-  });
-}
 
   @override
   Widget build(BuildContext context) {
