@@ -26,38 +26,36 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     getNews();
   }
+void getNews() async {
+  setState(() {
+    _isLoading = true;
+  });
 
-  getNews() async {
-    setState(() {
-      _isLoading = true;
-    });
+  final hiveService = await HiveService.getInstance();
+  final cachedNews = hiveService.getValue("news");
+  print("Cached news type: ${cachedNews.runtimeType}");
 
-    final hiveService = await HiveService.getInstance();
-    final cachedNews = hiveService.getValue<List<Map<String,dynamic>>>("news");
-    print("the cached data is $cachedNews");
-    if (cachedNews != null) {
-      List<Map<String, dynamic>> newsMapList = cachedNews.map((e) => e).toList();
-      news =
-          newsMapList.map((e) => NewsClass.fromJson(e )).toList(growable: true);
-      Flushbar(
-        title: "Cached Data",
-        titleColor: Colors.white,
-        icon: const Icon(Icons.check),
-        backgroundColor: Colors.green,
-        titleSize: 20,
-        dismissDirection: FlushbarDismissDirection.HORIZONTAL,
-        message: "Data cached From Device",
-      );
-    } else {
-      NewsApi newsApi = NewsApi();
-      await newsApi.getNews();
-      news = newsApi.articleNews;
-      hiveService.storeValue('news', news.map((e) => e.toJson()).toList());
-    }
-    setState(() {
-      _isLoading = false;
-    });
+ if (cachedNews != null) {
+  try {
+    news = (cachedNews as List<dynamic>)
+        .map((e) => NewsClass.fromJson(e))
+        .toList();
+    print("Loaded cached news successfully: $news");
+  } catch (err) {
+    print("Error while loading cached news: $err");
+    news = [];
   }
+} else {
+    // Fetch new data if cache is empty
+    NewsApi newsApi = NewsApi();
+    await newsApi.getNews();
+    news = newsApi.articleNews;
+  }
+
+  setState(() {
+    _isLoading = false;
+  });
+}
 
   @override
   Widget build(BuildContext context) {

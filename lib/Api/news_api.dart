@@ -25,6 +25,7 @@ class NewsApi {
       var jsonData = jsonDecode(responseData.body);
 
       if (jsonData['status'] == 'ok') {
+         List<NewsClass> tempArticles = [];
         jsonData['articles'].forEach((element) {
           if (element['author'] != null &&
               element['title'] != null &&
@@ -36,8 +37,13 @@ class NewsApi {
             articleNews.add(newsArticles);
           }
         });
-        hiveService.storeValue("news", articleNews);
+           articleNews = tempArticles;
 
+      // Serialize data to store in Hive
+      hiveService.storeValue<List<Map<String, dynamic>>>(
+        "news",
+        articleNews.map((news) => news.toJson()).toList(),
+      );
       }
     } catch (err) {
       Flushbar(
